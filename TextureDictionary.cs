@@ -6,14 +6,16 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using Dalamud.Game;
+using Dalamud.Interface.Internal;
 using Dalamud.Logging;
+using Dalamud.Plugin.Services;
 using Dalamud.Utility;
 using ImGuiScene;
 using Lumina.Data.Files;
 
 namespace QoLBar;
 
-public class TextureDictionary : ConcurrentDictionary<int, TextureWrap>, IDisposable
+public class TextureDictionary : ConcurrentDictionary<int, IDalamudTextureWrap>, IDisposable
 {
     public const int FrameIconID = 10_000_000;
     private const string IconFileFormat = "ui/icon/{0:D3}000/{1}{2:D6}{3}.tex";
@@ -27,9 +29,17 @@ public class TextureDictionary : ConcurrentDictionary<int, TextureWrap>, IDispos
     private int loadingTasks = 0;
     private readonly Queue<Task> loadingQueue = new();
     private readonly Stopwatch emptyStopwatch = new();
-    private static readonly TextureWrap disposedTexture = new GLTextureWrap(0, 0, 0);
+    private static readonly IDalamudTextureWrap disposedTexture = new DummyTextureWrap();
     private readonly bool useHR = false;
     private readonly bool useGrayscale = false;
+
+    private class DummyTextureWrap : IDalamudTextureWrap
+    {
+        public IntPtr ImGuiHandle => 0;
+        public int Width => 0;
+        public int Height => 0;
+        public void Dispose() {}
+    }
 
     public TextureDictionary(bool hr, bool gs)
     {
@@ -37,13 +47,13 @@ public class TextureDictionary : ConcurrentDictionary<int, TextureWrap>, IDispos
         useGrayscale = gs;
     }
 
-    public new TextureWrap this[int k]
+    public new IDalamudTextureWrap this[int k]
     {
         get => TryGetValue(k, out var tex) ? tex : null;
         set => base[k] = value;
     }
 
-    public new bool TryGetValue(int k, out TextureWrap tex)
+    public new bool TryGetValue(int k, out IDalamudTextureWrap tex)
     {
         if (!IsEmptying) return base.TryGetValue(k, out tex) && (tex == null || tex.ImGuiHandle != nint.Zero) || LoadTexture(k, out tex);
         tex = null;
@@ -101,7 +111,7 @@ public class TextureDictionary : ConcurrentDictionary<int, TextureWrap>, IDispos
         DalamudApi.DataManager.FileExists(GetIconPath(icon, "", false))
         || DalamudApi.DataManager.FileExists(GetIconPath(icon, "en/", false));
 
-    private TextureWrap LoadTextureWrapSquare(TexFile tex)
+    private IDalamudTextureWrap LoadTextureWrapSquare(TexFile tex)
     {
         var imageData = !useGrayscale ? tex.GetRgbaImageData() : tex.GetGrayscaleImageData();
         if (tex.Header.Width > tex.Header.Height)
@@ -137,7 +147,7 @@ public class TextureDictionary : ConcurrentDictionary<int, TextureWrap>, IDispos
         }
     }
 
-    private void LoadTextureWrap(int i, Func<TextureWrap> loadFunc)
+    private void LoadTextureWrap(int i, Func<IDalamudTextureWrap> loadFunc)
     {
         this[i] = null;
 
@@ -161,7 +171,7 @@ public class TextureDictionary : ConcurrentDictionary<int, TextureWrap>, IDispos
     }
 
     // Seems to cause a nvwgf2umx.dll crash (System Access Violation Exception) if used async
-    private TextureWrap LoadImage(int iconSlot, string path)
+    private IDalamudTextureWrap LoadImage(int iconSlot, string path)
     {
         try
         {
@@ -189,7 +199,7 @@ public class TextureDictionary : ConcurrentDictionary<int, TextureWrap>, IDispos
         return (iconTex == null) ? null : LoadTextureWrapSquare(iconTex);
     });
 
-    private bool LoadTexture(int k, out TextureWrap tex)
+    private bool LoadTexture(int k, out IDalamudTextureWrap tex)
     {
         tex = null;
 
@@ -210,7 +220,7 @@ public class TextureDictionary : ConcurrentDictionary<int, TextureWrap>, IDispos
         return false;
     }
 
-    private void UpdateLoad(Framework framework)
+    private void UpdateLoad(IFramework framework)
     {
         if (IsEmptying)
             loadingQueue.Clear();
@@ -272,7 +282,7 @@ public class TextureDictionary : ConcurrentDictionary<int, TextureWrap>, IDispos
         DalamudApi.Framework.Update += UpdateEmpty;
     }
 
-    private void UpdateEmpty(Framework framework)
+    private void UpdateEmpty(IFramework framework)
     {
         if (emptyStopwatch.Elapsed.TotalSeconds < 1) return;
 

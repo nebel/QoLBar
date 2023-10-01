@@ -10,6 +10,7 @@ using Dalamud.Game;
 using Dalamud.Game.Gui;
 using Dalamud.Logging;
 using Dalamud.Plugin;
+using Dalamud.Plugin.Services;
 using Dalamud.Utility;
 using ImGuiNET;
 
@@ -162,13 +163,13 @@ public class QoLBar : IDalamudPlugin
             Game.StartPerformance(b);
     }
 
-    public static bool HasPlugin(string name) => DalamudApi.PluginInterface.PluginInternalNames.Contains(name);
+    public static bool HasPlugin(string name) => DalamudApi.PluginInterface.InstalledPlugins.Any(p => p.Name == name && p.IsLoaded);
 
     public static bool IsLoggedIn() => ConditionManager.CheckCondition("l");
 
     public static float RunTime => (float)DalamudApi.PluginInterface.LoadTimeDelta.TotalSeconds;
     public static long FrameCount => (long)DalamudApi.PluginInterface.UiBuilder.FrameCount;
-    private void Update(Framework framework)
+    private void Update(IFramework framework)
     {
         if (!pluginReady) return;
 

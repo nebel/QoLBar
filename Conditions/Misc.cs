@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 using Dalamud.Game.ClientState.Objects.Enums;
@@ -364,11 +365,11 @@ public class PluginCondition : ICondition, IDrawableCondition, IArgCondition
 
     public void Draw(CndCfg cndCfg)
     {
-        if (ImGui.BeginCombo("##PluginsList", cndCfg.Arg is string ? cndCfg.Arg : string.Empty))
-        {
-            for (int i = 0; i < DalamudApi.PluginInterface.PluginInternalNames.Count; i++)
+        if (ImGui.BeginCombo("##PluginsList", cndCfg.Arg is string ? cndCfg.Arg : string.Empty)) {
+            var plugins = DalamudApi.PluginInterface.InstalledPlugins.ToList();
+            for (int i = 0; i < plugins.Count; i++)
             {
-                var name = DalamudApi.PluginInterface.PluginInternalNames[i];
+                var name = plugins[i].Name;
                 if (!ImGui.Selectable($"{name}##{i}", cndCfg.Arg == name)) continue;
 
                 cndCfg.Arg = name;

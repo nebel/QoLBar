@@ -2,8 +2,8 @@ using System;
 using System.Numerics;
 using System.Collections.Generic;
 using System.Diagnostics;
+using Dalamud.Interface.Utility;
 using ImGuiNET;
-using Dalamud.Interface;
 using Dalamud.Logging;
 
 namespace QoLBar;
