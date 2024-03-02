@@ -6,6 +6,7 @@ using System.Linq;
 using Dalamud.Interface.Textures.TextureWraps;
 using ImGuiNET;
 using Dalamud.Interface.Utility;
+using Dalamud.Logging;
 using Lumina.Excel;
 
 namespace QoLBar;
@@ -230,6 +231,31 @@ public static class ImGuiEx
         drawList.AddIconFrame(p1, settings.size, settings.frame, settings.hovered, settings.activeTime, settings.cooldownCurrent, settings.cooldownMax, settings.cooldownStyle);
     }
 
+    private static void AddFrameBackdrop(this ImDrawListPtr drawList, IDalamudTextureWrap tex, Vector2 pos, IconSettings settings)
+    {
+        if (tex == null) return;
+
+        var z = 0.5f / settings.zoom;
+        var uv1 = new Vector2(0.5f - z + settings.offset.X, 0.5f - z + settings.offset.Y);
+        var uv3 = new Vector2(0.5f + z + settings.offset.X, 0.5f + z + settings.offset.Y);
+
+        var p1 = pos;
+        var p2 = pos + new Vector2(settings.size.X, 0);
+        var p3 = pos + settings.size;
+        var p4 = pos + new Vector2(0, settings.size.Y);
+
+        var rCos = (float)Math.Cos(settings.rotation);
+        var rSin = (float)-Math.Sin(settings.rotation);
+        var uvHalfSize = (uv3 - uv1) / 2;
+        var uvCenter = uv1 + uvHalfSize;
+        uv1 = uvCenter + RotateVector(-uvHalfSize, rCos, rSin);
+        var uv2 = uvCenter + RotateVector(new Vector2(uvHalfSize.X, -uvHalfSize.Y), rCos, rSin);
+        uv3 = uvCenter + RotateVector(uvHalfSize, rCos, rSin);
+        var uv4 = uvCenter + RotateVector(new Vector2(-uvHalfSize.X, uvHalfSize.Y), rCos, rSin);
+
+        drawList.AddImageQuad(tex.ImGuiHandle, p1, p2, p3, p4, uv1, uv2, uv3, uv4, BackdropColor);
+    }
+
     private static readonly Vector2 iconFrameUV0 = new(1f / 426f, 141f / 426f);
     private static readonly Vector2 iconFrameUV1 = new(47f / 426f, 187f / 426f);
     private static readonly Vector2 iconHoverUV0 = new(49f / 426f, 238f / 426f);
@@ -358,9 +384,24 @@ public static class ImGuiEx
 
     private static void DrawIcon(IDalamudTextureWrap icon, IconSettings settings) => ImGui.GetWindowDrawList().AddIcon(icon, ImGui.GetItemRectMin(), settings);
 
+    // private static uint BackdropColor = 0xFFFFFFFF;
+    // private static uint BackdropColor = 0xFFAAAAAA;
+    // private static uint BackdropColor = 0xFF888888;
+    // private static uint BackdropColor = 0xFF88AACC;
+    // private static uint BackdropColor = 0xFFDDAA99;
+    private static uint BackdropColor = 0xFFCC9988;
+
     public static void Icon(IDalamudTextureWrap icon, IconSettings settings)
     {
-        ImGui.Dummy(settings.size);
+        // PluginLog.Warning("?icon?");
+        // settings = settings with { color = 0xFF00FF00 };
+        if (settings.frame) {
+            // var tex = QoLBar.TextureDictionary[61697];
+            // var tex = QoLBar.TextureDictionary[40802];
+            // var tex = QoLBar.TextureDictionary[59099];
+            // var tex = QoLBar.textureDictionaryGSHR[59099];
+            // ImGui.GetWindowDrawList().AddFrameBackdrop(tex, ImGui.GetItemRectMin(), settings);
+        }
         DrawIcon(icon, settings);
     }
 
@@ -369,6 +410,13 @@ public static class ImGuiEx
         var ret = ImGui.InvisibleButton(id, settings.size);
         settings.activeTime = (settings.activeTime >= 0) ? settings.activeTime : (ImGui.IsItemActive() ? -1 : 0);
         settings.hovered = settings.activeTime > 0 || ImGui.IsItemHovered(ImGuiHoveredFlags.RectOnly);
+        // if (settings.frame) {
+        //     // var tex = QoLBar.TextureDictionary[61697];
+        //     var tex = QoLBar.TextureDictionary[40802];
+        //     // var tex = QoLBar.TextureDictionary[59099];
+        //     // var tex = QoLBar.textureDictionaryGSHR[59099];
+        //     ImGui.GetWindowDrawList().AddFrameBackdrop(tex, ImGui.GetItemRectMin(), settings);
+        // }
         DrawIcon(icon, settings);
         return ret;
     }
