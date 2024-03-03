@@ -389,34 +389,32 @@ public static class ImGuiEx
     // private static uint BackdropColor = 0xFF888888;
     // private static uint BackdropColor = 0xFF88AACC;
     // private static uint BackdropColor = 0xFFDDAA99;
-    private static uint BackdropColor = 0xFFCC9988;
+    private const uint BackdropColor = 0xFFCC9988;
 
+    // private static IDalamudTextureWrap BackdropTex => QoLBar.TextureDictionary[61697];
+    private static IDalamudTextureWrap BackdropTex => QoLBar.TextureDictionary[40802];
+    // private static IDalamudTextureWrap BackdropTex => QoLBar.TextureDictionary[59099];
+    // private static IDalamudTextureWrap BackdropTex => QoLBar.textureDictionaryGSHR[59099];
+
+    // Used for unselectable icons (e.g. spacers)
     public static void Icon(IDalamudTextureWrap icon, IconSettings settings)
     {
-        // PluginLog.Warning("?icon?");
-        // settings = settings with { color = 0xFF00FF00 };
+        ImGui.Dummy(settings.size);
         if (settings.frame) {
-            // var tex = QoLBar.TextureDictionary[61697];
-            // var tex = QoLBar.TextureDictionary[40802];
-            // var tex = QoLBar.TextureDictionary[59099];
-            // var tex = QoLBar.textureDictionaryGSHR[59099];
-            // ImGui.GetWindowDrawList().AddFrameBackdrop(tex, ImGui.GetItemRectMin(), settings);
+            ImGui.GetWindowDrawList().AddFrameBackdrop(BackdropTex, ImGui.GetItemRectMin(), settings);
         }
         DrawIcon(icon, settings);
     }
 
+    // Used for selectable icons (e.g. buttons)
     public static bool IconButton(string id, IDalamudTextureWrap icon, IconSettings settings)
     {
         var ret = ImGui.InvisibleButton(id, settings.size);
         settings.activeTime = (settings.activeTime >= 0) ? settings.activeTime : (ImGui.IsItemActive() ? -1 : 0);
         settings.hovered = settings.activeTime > 0 || ImGui.IsItemHovered(ImGuiHoveredFlags.RectOnly);
-        // if (settings.frame) {
-        //     // var tex = QoLBar.TextureDictionary[61697];
-        //     var tex = QoLBar.TextureDictionary[40802];
-        //     // var tex = QoLBar.TextureDictionary[59099];
-        //     // var tex = QoLBar.textureDictionaryGSHR[59099];
-        //     ImGui.GetWindowDrawList().AddFrameBackdrop(tex, ImGui.GetItemRectMin(), settings);
-        // }
+        if (settings.frame) {
+            ImGui.GetWindowDrawList().AddFrameBackdrop(BackdropTex, ImGui.GetItemRectMin(), settings);
+        }
         DrawIcon(icon, settings);
         return ret;
     }
