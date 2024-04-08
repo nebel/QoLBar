@@ -256,7 +256,7 @@ public static class Keybind
     private static readonly byte[] keyboardState = new byte[256];
     private static readonly QoLKeyState[] keyStates = new QoLKeyState[keyboardState.Length];
     private static readonly HashSet<int> conflictingHotkeys = new();
-    private static bool Disabled => Game.IsGameTextInputActive || !Game.IsGameFocused || ImGui.GetIO().WantCaptureKeyboard;
+    private static bool disabled;
     private static bool barCachesValid;
 
     [DllImport("user32.dll")]
@@ -265,6 +265,7 @@ public static class Keybind
 
     public static void Run()
     {
+        disabled = Game.IsGameTextInputActive || !Game.IsGameFocused || ImGui.GetIO().WantCaptureKeyboard;
         GetKeyStates();
         DoPieHotkeys();
         DoHotkeys();
@@ -358,7 +359,7 @@ public static class Keybind
 
     public static bool IsHotkeyHeld(int hotkey, bool blockGame)
     {
-        if (Disabled) return false;
+        if (disabled) return false;
 
         var key = GetBaseHotkey(hotkey);
         var isDown = CheckKeyState(key, QoLKeyState.State.Held) && hotkey == (key | GetModifiers());
@@ -406,7 +407,7 @@ public static class Keybind
 
     private static void DoHotkeys()
     {
-        if (Disabled) { hotkeys.Clear(); return; }
+        if (disabled) { hotkeys.Clear(); return; }
 
         var modifiers = GetModifiers();
         foreach (var (bar, sh) in hotkeys)
