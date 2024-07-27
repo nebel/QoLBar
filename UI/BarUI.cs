@@ -102,7 +102,7 @@ public class BarUI : IDisposable
         get => _activated;
         set
         {
-            if (!value && !_activated)
+            if (!value && _activated)
             {
                 foreach (var ui in children)
                     ui.ClearActivated();
